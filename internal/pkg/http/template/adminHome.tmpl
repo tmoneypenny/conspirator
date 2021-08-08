@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" href="data:,">
+    <script>
+        function revealKey() {
+            document.getElementById("token").innerHTML = {{ index . "AccessToken" }};
+        }
+    </script>
+</head>
+<body>
+    {{ .csrfField }}
+    <h2>Welcome, {{ index . "random" }}!</h2>
+    <button onclick="revealKey()">Show Token</button>
+    <p><code id="token"></code></p>
+    <p><a href="/admin/addRoute">Add Route</a></p>
+    <p><a href="/admin/deleteRoute">Delete Route</a></p>
+    <p><a href="/admin/showRoutes">Show Routes</a></p>
+    <p><a href="/admin/poll">Polling Server</a></p>
+    <p><a href="/admin/docs/index.html">API Docs</a></p>
+</body>
+</html>

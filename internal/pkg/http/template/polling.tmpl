@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<link rel="icon" href="data:,">
+<title>Polling</title>
+</head>
+<body>
+    <textarea cols=80 rows=30 id="message" style="overflow:auto;"></textarea>
+    <br>
+    <button id=startPoll>Start Poll</button>
+    <button id=stopPoll>Stop Poll</button>
+    <div id=output></div>
+
+    <script>
+        let output = document.querySelector("#output"),
+            textarea = document.querySelector("textarea");
+
+        let startButton = document.querySelector("#startPoll"),
+            stopButton = document.querySelector("#stopPoll");
+
+        startButton.addEventListener("click", startPoll);
+        stopButton.addEventListener("click", stopPoll);
+
+        let pollingServer = "polling." + document.domain;
+        let socket = new WebSocket("wss://"+ pollingServer);
+        let pollingInterval;
+
+        function startPoll() {
+            console.log("starting polling");
+            socket.onopen = event => { 
+                console.log("Connection Established");
+                socket.send("biid?id="+1);
+            };
+
+            socket.onmessage = event => {
+                console.log(event);
+                textarea.value += event.data + "\n";
+            };
+
+            socket.onclose = event => {
+                if (event.wasClean) {
+                    console.log("Connection closed");
+                    clearInterval(pollingInterval);
+                } else {
+                    console.log("Connection not closed cleanly");
+                    clearInterval(pollingInterval);
+                }
+            };
+
+            pollingInterval = setInterval(() => {
+                socket.send('update');
+            }, 2000);
+
+            socket.onerror = error => console.log(`error ${error.message}`);
+        };
+
+        function stopPoll() {
+            console.log("stopping polling");
+            clearInterval(pollingInterval);
+        };
+
+    </script>
+</body>
+</html>

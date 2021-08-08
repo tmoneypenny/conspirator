@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<link rel="icon" href="data:,">
+</head>
+<body>
+    <h2>Admin: Delete route</h2>
+        {{ .csrfField }}
+    <form id="formElem">
+        <label for="reqMethod">Method:</label><br>
+        <select id="select" multiple>
+            <option value="GET" selected>GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="HEAD">HEAD</option>
+            <option value="DELETE">DELETE</option>
+            <option value="TRACE">TRACE</option>
+            <option value="OPTIONS">OPTIONS</option>
+        </select>
+        <p></p>
+        <label for="urlPath">URL:</label><br>
+        <input type="text" id="urlPath" name="urlPath" value=""><br>
+        <p></p>
+        <input type="submit" value="Submit">
+    </form>
+    <script>
+        const endpoint = '/api/v1/deleteRoute';
+
+        formElem.onsubmit = async (f) => {
+            f.preventDefault();
+
+            let formData = new FormData(formElem);
+
+            let csrfToken = formData.get('gorilla.csrf.Token')
+            let apiToken = formData.get('access-token')
+            let selected = Array.from(select.options)
+                .filter(option => option.selected)
+                .map(option => option.value);
+
+            formData.set('methods', btoa(selected));
+
+            let response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken,
+                    'Authorization': 'Bearer {{ index . "AccessToken" }}'
+                },
+                body: formData
+            });
+
+            let result = await response.json();
+
+            alert(result.status);
+        };
+    </script>
+
+</body>
+
+</html>

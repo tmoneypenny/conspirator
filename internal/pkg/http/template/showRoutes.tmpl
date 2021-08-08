@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<link rel="icon" href="data:,">
+    <script>
+        (async () => {
+            const endpoint = '/api/v1/showRoutes';
+            let response = await fetch(endpoint, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer {{ index . "AccessToken" }}'
+                }
+            });
+
+            let result = await response.json();
+
+            console.log(result);
+            let liList = [];
+
+
+            let routes = Object.fromEntries(
+            	Object.entries(result.Routes).map(([key, value]) => [key, value])
+            );
+
+
+            for (let route of Object.keys(routes)) {
+                let routeInfo = Object.fromEntries(
+                    Object.entries(routes[route]).map(([key, value]) => [key, value])
+                );
+                
+                Object.entries(routeInfo).forEach(function(r, index, arr) {
+                    let method = r[0]
+                    let contentType = r[1]
+                    let li = document.createElement('li');
+                    li.append(`Route: ${route}, Method: ${method}, ContentType: ${contentType}`);
+                    liList.push(li);
+                    console.log(route, method, contentType)	
+                });
+            };
+
+            ul.append(...liList)
+            console.log("Result over here %j", result);
+        })()
+    </script>
+</head>
+<body>
+    <ul id="ul"></ul>
+</body>
+</html>

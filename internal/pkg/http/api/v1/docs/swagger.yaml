@@ -1,0 +1,167 @@
+basePath: /api/v1
+info:
+  contact: {}
+  description: Provides an API for interacting with the server
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: API
+  version: v1
+paths:
+  /addRoute:
+    post:
+      consumes:
+      - multipart/form-data
+      description: add a new route
+      parameters:
+      - description: absolute URL path, e.g. /test or /test.jpg
+        in: formData
+        name: urlPath
+        required: true
+        type: string
+      - description: list of b64 encoded HTTP methods, e.g. GET,POST,PUT
+        in: formData
+        name: methods
+        required: true
+        type: string
+      - description: list of b64 encoded headers separated by \r\n
+        in: formData
+        name: headers
+        required: true
+        type: string
+      - description: base64 encoded body
+        in: formData
+        name: body
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Invalid Token
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - AuthToken: []
+      summary: Add route
+      tags:
+      - routes
+  /deleteRoute:
+    post:
+      consumes:
+      - multipart/form-data
+      description: resets a route to default
+      parameters:
+      - description: absolute URL path, e.g. /test or /test.jpg
+        in: formData
+        name: urlPath
+        required: true
+        type: string
+      - description: list of b64 encoded HTTP methods, e.g. GET,POST,PUT
+        in: formData
+        name: methods
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Invalid Token
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - AuthToken: []
+      summary: Delete route
+      tags:
+      - routes
+  /healthz:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Show the status of server.
+      tags:
+      - status
+  /metrics:
+    get:
+      consumes:
+      - '*/*'
+      description: get server metrics in prometheus format
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Invalid Token
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - AuthToken: []
+      summary: Get metrics
+      tags:
+      - status
+  /showRoutes:
+    get:
+      consumes:
+      - multipart/form-data
+      description: show all added routes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Invalid Token
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      security:
+      - AuthToken: []
+      summary: Show routes
+      tags:
+      - routes
+securityDefinitions:
+  AuthToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

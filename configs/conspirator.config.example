@@ -1,0 +1,55 @@
+{
+    "domain": "test.example.company",
+    "publicAddress": "355.355.355.1",
+    "logLevel": "INFO",
+    "pollingEncoding": "burp",
+    "maxPollingEvents": 256,
+    "http": {
+        "enableV2": true,
+        "username": "root",
+        "password": "toor",
+        "csrfKey": "a8mdaslw029jlkjnwn9shdw13dfew53i",
+        "signingKey": "SuperSecretSecureSigningKeyOf32b",
+        "templatePath": "internal/pkg/http/template/",
+        "listeners": [
+            {
+                "address": "",
+                "pollingSubdomain": "polling",
+                "allowlist": ["127.0.0.1", "192.168.1.10"],
+                "port": 80,
+                "tls": {
+                    "port": 443,
+                    "publicKey": "certs/star.test.example.company/fullchain.pem",
+                    "privateKey": "certs/star.test.example.company/privkey.pem"
+                }
+            }
+        ]
+    },
+    "dns": {
+        "zones": [
+            "test.example.company",
+            "dev.example.company"
+        ],
+        "listeners": [
+            {
+                "address": "",
+                "proto": "tcp",
+                "port": 53
+            },
+            {
+                "address": "",
+                "proto": "udp",
+                "port": 54
+            },
+            {
+                "address": "",
+                "proto": "tcp-tls",
+                "port": 53,
+                "tls": {
+                    "publicKey": "certs/star.test.example.company/fullchain.pem",
+                    "privateKey": "certs/star.test.example.company/privkey.pem"
+                }
+            }
+        ]
+    }
+}
