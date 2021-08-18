@@ -2,6 +2,7 @@
 main
 conspirator.tgz
 templates.tgz
+
 *.exe
 *.exe~
 *.dll

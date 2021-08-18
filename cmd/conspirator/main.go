@@ -12,7 +12,6 @@
 // limitations under the License.
 
 // The main package for the Conspirator server executable.
-
 package main
 
 import (
