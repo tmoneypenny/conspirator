@@ -45,9 +45,11 @@ type DNSInput struct {
 
 // RawInput is used as a generic input to the marshaller
 type RawInput struct {
-	Protocol string
-	ClientIP string
-	Request  []byte
+	InteractionURI string
+	Protocol       string
+	ClientIP       string
+	Request        []byte
+	Response       []byte
 }
 
 // NewMarshaller constructs a new JSON Marshaller

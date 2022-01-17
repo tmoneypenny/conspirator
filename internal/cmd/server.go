@@ -1,14 +1,17 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
+	"plugin"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/tmoneypenny/conspirator/internal/pkg/bind"
 	"github.com/tmoneypenny/conspirator/internal/pkg/http"
 	"github.com/tmoneypenny/conspirator/internal/pkg/polling"
+	"github.com/tmoneypenny/conspirator/pkg/wrapper"
 )
 
 // configureBind builds a BindConfig by parsing the config file
@@ -100,7 +103,9 @@ func serverHandler() {
 
 	bind.BindServer(bindConfig).Start()
 	http.HTTPServer(httpConfig).Start()
-	extensionHandler(manager)
+
+	extShutdown := make(chan bool)
+	go extensionHandler(manager, extShutdown)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -112,14 +117,78 @@ func serverHandler() {
 		log.Info().Msg("Shutting down services...")
 		http.HTTPServer(httpConfig).Stop()
 		bind.BindServer(bindConfig).Stop()
-		manager.Stop()
+		extShutdown <- true // Initial plugin shutdown
+		<-extShutdown       // Wait for shutdown
+		manager.Stop()      // Stop polling server
+		log.Info().Msg("Bye!")
 	}()
 }
 
+// Modules must implement Start and Stop methods.
+// Extension may interact with packages, but not vice-versa
+
+// ExtensionPlugins
+type ExtensionPlugins struct {
+	PollingServer *polling.PollingServer
+}
+
 // extensionHandler is used to load modules defined in the config
-func extensionHandler(pollingServer *polling.PollingServer) {
-	// Modules must implement Start and Stop methods
-	// get all SO listed in configuration. create sym lookup
-	// use the module
-	// extension may interact with packages, but not vice-versa
+func extensionHandler(pollingServer *polling.PollingServer, shutdown chan bool) {
+	log.Debug().Msg("Starting extension handler...")
+
+	plugins := viper.Get("plugins")
+	log.Debug().Msg("Loading plugins...")
+
+	extensions := ExtensionPlugins{
+		PollingServer: pollingServer,
+	}
+
+	for k := range plugins.(map[string]interface{}) {
+		extensions.extensionLoader(k)
+	}
+
+	log.Info().Msg("All plugins started!")
+	<-shutdown
+
+	log.Info().Msg("Unloading plugins...")
+	for k := range plugins.(map[string]interface{}) {
+		extensions.extensionUnloader(k)
+	}
+
+	shutdown <- true
+}
+
+func (e *ExtensionPlugins) extensionLoader(pluginName string) {
+	p, err := plugin.Open(viper.GetString("pluginsDirectory") + fmt.Sprintf("%s.so", pluginName))
+	if err != nil {
+		log.Fatal().Msgf("Failed to open plugin: %s [%v]", pluginName, err)
+	}
+
+	server, err := p.Lookup("NewServer")
+	if err != nil {
+		log.Fatal().Msgf("Failed to load plugins: %v", err)
+	}
+
+	// Start Server
+	server.(func(cfg wrapper.Config) wrapper.Module)(wrapper.Config{
+		PollingManager: e.PollingServer,
+	}).Start()
+
+}
+
+func (e *ExtensionPlugins) extensionUnloader(pluginName string) {
+	p, err := plugin.Open(viper.GetString("pluginsDirectory") + fmt.Sprintf("%s.so", pluginName))
+	if err != nil {
+		log.Fatal().Msgf("Failed to open plugin symbols: %s [%v]", pluginName, err)
+	}
+
+	server, err := p.Lookup("NewServer")
+	if err != nil {
+		log.Fatal().Msgf("Failed to load plugins: %v", err)
+	}
+
+	// Stop Server
+	server.(func(cfg wrapper.Config) wrapper.Module)(wrapper.Config{
+		PollingManager: e.PollingServer,
+	}).Stop()
 }

@@ -56,6 +56,7 @@ type server struct {
 
 func checkAllowlist(ip string, allowed *[]string) bool {
 	reqIP := net.ParseIP(ip)
+	log.Debug().Msgf("Polling interaction from %s", reqIP.String())
 	for _, checkIP := range *allowed {
 		goodIP := net.ParseIP(checkIP)
 		if reqIP.Equal(goodIP) {
@@ -108,6 +109,16 @@ func (s *server) startListeners() {
 
 	// Set default marshaller for polling requests
 	s.Marshaller = encoding.NewMarshaller(encoding.Format(viper.Get("pollingEncoding").(string)))
+
+	// static middleware
+	if viper.GetBool("http.static.enable") {
+		s.HTTP.Group(viper.GetString("http.static.prefix"),
+			middleware.StaticWithConfig(middleware.StaticConfig{
+				Root:   viper.GetString("http.static.path"),
+				Browse: viper.GetBool("http.static.browsing"),
+			}),
+		)
+	}
 
 	s.HTTP.Use(interaction.InteractionMiddleware(interaction.InteractionConfig{
 		Polling:    s.PollingManager,

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"os"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/tmoneypenny/conspirator/pkg/config"
 )
 
 var configureSuggestion = fmt.Sprintf(`
@@ -202,24 +201,5 @@ func generateCredentials(pwType string) string {
 }
 
 func initConfig() {
-	if viper.GetString("config") == "" {
-		viper.AddConfigPath(fmt.Sprintf("$HOME/%s/configs", ProjectName))
-		viper.AddConfigPath(".")
-		viper.AddConfigPath("./configs")
-		viper.SetConfigName(fmt.Sprintf("%s.config", ProjectName))
-		viper.SetConfigType("json")
-	} else {
-		viper.SetConfigType("json")
-		viper.SetConfigFile(viper.GetString("config"))
-	}
-
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error: %v\n%s", err, configureSuggestion)
-		os.Exit(1)
-	}
-
-	fmt.Println(viper.Get("domain"))
-
-	fmt.Println(viper.ConfigFileUsed())
-	// check flag, if no flag, check default, otherwise recommend config command
+	config.InitConfig(ProjectName, configureSuggestion)
 }

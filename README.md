@@ -65,7 +65,6 @@ DNS related docs can be found in the `docs/` folder at the root of the repositor
 
 ## TODO
 - Beautify UI
-- Provide example plugin
 - Implement SMTP
 - Implement NS record
 - Add GHA 

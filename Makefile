@@ -9,12 +9,12 @@ build:
 bundle:
 	swag init -dir internal/pkg/http/api/v1/ -g api.go --output internal/pkg/http/api/v1/docs
 	go build -o "${BIN_FILE}" cmd/conspirator/main.go 
-	mkdir -p bundle/bin/ bundle/config/ bundle/templates/
+	mkdir -p bundle/bin/ bundle/config/ bundle/templates/ bundle/plugins/
 	cp "${BIN_FILE}" bundle/bin/${BIN_FILE}
 	cp internal/pkg/http/template/*.tmpl bundle/templates/
+	find plugins/ -type f -name '*.so' -exec cp {} bundle/plugins/ \;
 	cp configs/conspirator.config bundle/config/conspirator.config
 	tar -czf "${BIN_FILE}.tgz" bundle/
-	rm -rf bundle/ "${BIN_FILE}"
 
 run: 
 	./${BIN_FILE} start
@@ -34,6 +34,7 @@ test:
 
 clean:
 	go clean
-	rm "${BIN_FILE}"
-	rm templates.tgz
+	rm -rf bundle/
+	rm -f "${BIN_FILE}"
+	rm -f ${BIN_FILE}.tgz
 
