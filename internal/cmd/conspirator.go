@@ -56,8 +56,7 @@ func init() {
 	viper.BindPFlags(startCmd.Flags())
 
 	// Add sub-commands
-	rootCmd.AddCommand(startCmd)
-	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(startCmd, configCmd)
 
 	// prevent init for root help cmd
 	if rootCmd.Use == ProjectName {

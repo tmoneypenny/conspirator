@@ -10,7 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/tmoneypenny/conspirator/pkg/config"
 )
 
 var configureSuggestion = fmt.Sprintf(`
@@ -37,6 +37,8 @@ type Configuration struct {
 	MaxPollingEvents int               `json:"maxPollingEvents"`
 	HTTP             HTTPConfiguration `json:"http"`
 	DNS              DNSConfiguration  `json:"dns"`
+	PluginsDirectory string            `json:"pluginsDirectory"`
+	Plugin           Plugins           `json:"plugins"`
 }
 
 type DNSConfiguration struct {
@@ -57,13 +59,21 @@ type DNSTransportSecurity struct {
 }
 
 type HTTPConfiguration struct {
-	EnableV2     bool            `json:"enableV2"`
-	Username     string          `json:"username"`
-	Password     string          `json:"password"`
-	CsrfKey      string          `json:"csrfKey"`
-	SigningKey   string          `json:"signingKey"`
-	TemplatePath string          `json:"templatePath"`
-	Listeners    []HTTPListeners `json:"listeners"`
+	EnableV2     bool                     `json:"enableV2"`
+	Username     string                   `json:"username"`
+	Password     string                   `json:"password"`
+	CsrfKey      string                   `json:"csrfKey"`
+	SigningKey   string                   `json:"signingKey"`
+	TemplatePath string                   `json:"templatePath"`
+	Listeners    []HTTPListeners          `json:"listeners"`
+	Static       HTTPStaticConfigurration `json:"static"`
+}
+
+type HTTPStaticConfigurration struct {
+	Browsing bool   `json:"browsing"`
+	Enable   bool   `json:"enable"`
+	Path     string `json:"path"`
+	Prefix   string `json:"prefix"`
 }
 
 type HTTPListeners struct {
@@ -80,6 +90,8 @@ type HTTPTransportSecurity struct {
 	PrivateKey string `json:"privateKey"`
 }
 
+type Plugins struct{}
+
 func generateConfig() {
 	cfg, _ := json.MarshalIndent(Configuration{
 		Domain:           "example.test.domain",
@@ -94,6 +106,12 @@ func generateConfig() {
 			CsrfKey:      generateCredentials("csrfKey"),
 			SigningKey:   generateCredentials("signingKey"),
 			TemplatePath: "internal/pkg/http/template/",
+			Static: HTTPStaticConfigurration{
+				Browsing: true,
+				Enable:   false,
+				Path:     "static/",
+				Prefix:   "/assets",
+			},
 			Listeners: []HTTPListeners{
 				{
 					Address:          "",
@@ -132,6 +150,8 @@ func generateConfig() {
 				},
 			},
 		},
+		PluginsDirectory: "plugins/",
+		Plugin:           Plugins{},
 	}, "", "    ")
 
 	fmt.Println(string(cfg))
@@ -202,24 +222,14 @@ func generateCredentials(pwType string) string {
 }
 
 func initConfig() {
-	if viper.GetString("config") == "" {
-		viper.AddConfigPath(fmt.Sprintf("$HOME/%s/configs", ProjectName))
-		viper.AddConfigPath(".")
-		viper.AddConfigPath("./configs")
-		viper.SetConfigName(fmt.Sprintf("%s.config", ProjectName))
-		viper.SetConfigType("json")
-	} else {
-		viper.SetConfigType("json")
-		viper.SetConfigFile(viper.GetString("config"))
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "config":
+			return
+		case "help":
+			return
+		default:
+			config.InitConfig(ProjectName, configureSuggestion)
+		}
 	}
-
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error: %v\n%s", err, configureSuggestion)
-		os.Exit(1)
-	}
-
-	fmt.Println(viper.Get("domain"))
-
-	fmt.Println(viper.ConfigFileUsed())
-	// check flag, if no flag, check default, otherwise recommend config command
 }

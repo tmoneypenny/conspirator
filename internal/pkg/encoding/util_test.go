@@ -7,7 +7,7 @@ import (
 )
 
 func TestRemovePortFromClientIP(t *testing.T) {
-	assert.Equal(t, "1.1.1.1", removePortFromClientIP("1.1.1.1:45678"))
-	assert.Equal(t, "1.1.1.1", removePortFromClientIP("1.1.1.1"))
-	assert.Equal(t, "", removePortFromClientIP(""))
+	assert.Equal(t, "1.1.1.1", RemovePortFromClientIP("1.1.1.1:45678"))
+	assert.Equal(t, "1.1.1.1", RemovePortFromClientIP("1.1.1.1"))
+	assert.Equal(t, "", RemovePortFromClientIP(""))
 }

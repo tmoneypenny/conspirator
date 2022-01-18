@@ -132,7 +132,7 @@ func (s *server) zoneHandler(w dns.ResponseWriter, r *dns.Msg, rrs zoneRRS) {
 	log.Debug().Msgf("received request for %v from %v", m.Question, w.RemoteAddr())
 
 	m.Answer = append(m.Answer, rrs.Record.([]dns.RR)...)
-	go s.interfactionHandler(r, m, w.RemoteAddr().String())
+	go s.interactionHandler(r, m, w.RemoteAddr().String())
 	if err := w.WriteMsg(m); err != nil {
 		log.Error().Msgf("failed to response to DNS query: %v", m)
 	}
@@ -191,13 +191,13 @@ func (s *server) defaultHandler(w dns.ResponseWriter, r *dns.Msg) {
 	log.Debug().Msgf("replied to question %v with answer %v [status: %v]", m.Question, m.Answer, m.Rcode)
 
 	//go s.PollingServer.Publish(fmt.Sprintf("%v:%v", r.Question[0].Name, m.Answer))
-	go s.interfactionHandler(r, m, w.RemoteAddr().String())
+	go s.interactionHandler(r, m, w.RemoteAddr().String())
 	if err := w.WriteMsg(m); err != nil {
 		log.Error().Msgf("failed to response to DNS query: %v", m)
 	}
 }
 
-func (s *server) interfactionHandler(q, a *dns.Msg, clientIP string) {
+func (s *server) interactionHandler(q, a *dns.Msg, clientIP string) {
 	input := &encoding.DNSInput{
 		SubdomainQuestion: q.Question[0].Name,
 		RawRequest:        q.Question[0].String(),

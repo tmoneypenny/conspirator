@@ -54,6 +54,12 @@ type DNSResultData struct {
 	RawRequest string `json:"rawRequest"`
 }
 
+// RawResultData will contain b64 encoded strings
+type RawResultData struct {
+	Response string `json:"response"`
+	Request  string `json:"request"`
+}
+
 // BurpMarshaller implements the Marshaller interface
 type BurpMarshaller struct {
 	Ndots int
@@ -117,7 +123,7 @@ func (m *BurpMarshaller) MarshalToJSON(data interface{}) ([]byte, error) {
 				),
 				Request: base64.StdEncoding.EncodeToString(httpEncoding.WriteRequest(d.Ctx.Request())),
 			},
-			ClientIP: removePortFromClientIP(d.Ctx.Request().RemoteAddr),
+			ClientIP: RemovePortFromClientIP(d.Ctx.Request().RemoteAddr),
 		})
 
 		return jsonData, error
@@ -134,12 +140,26 @@ func (m *BurpMarshaller) MarshalToJSON(data interface{}) ([]byte, error) {
 				Type:       d.RequestType,
 				RawRequest: base64.StdEncoding.EncodeToString([]byte(d.RawRequest)),
 			},
-			ClientIP: removePortFromClientIP(d.ClientIP),
+			ClientIP: RemovePortFromClientIP(d.ClientIP),
 		})
 		return jsonData, error
 	case *RawInput:
-		return nil, nil
+		log.Debug().Msg("Got Raw Event")
+		jsonData, error := json.Marshal(&Response{
+			Protocol:      d.Protocol,
+			OpCode:        "1", // only seen opCode = 1
+			InteractionID: d.InteractionURI,
+			ClientPart:    "0y", // not sure how this is used
+			Time:          fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond)),
+			Data: RawResultData{
+				Response: base64.StdEncoding.EncodeToString(d.Response),
+				Request:  base64.StdEncoding.EncodeToString(d.Request),
+			},
+			ClientIP: RemovePortFromClientIP(d.ClientIP),
+		})
+		return jsonData, error
 	default:
+		log.Debug().Msg("Default event")
 		return nil, nil
 	}
 }

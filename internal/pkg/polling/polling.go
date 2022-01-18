@@ -46,7 +46,7 @@ func New(cfg *PollingConfig) *PollingServer {
 
 // Start will create a new polling server and queue
 func (s *PollingServer) Start() *PollingServer {
-	events := make(chan *Event, viper.Get("maxPollingEvents").(int))
+	events := make(chan *Event, viper.GetInt("maxPollingEvents"))
 	eventRequest := make(chan int, 1)
 	quit := make(chan bool, 1)
 
