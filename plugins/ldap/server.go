@@ -44,15 +44,8 @@ func newServer(specs *LDAPConfig) *server {
 }
 
 func (s *server) startListeners() {
-	/*
-		defaultDN := defaultHandler{server: s}
-		// Respond to ANY baseDN
-	*/
-
 	customDN := handler{server: s}
-	//s.LDAP.BindFunc("", customDN.server)
-	//s.LDAP.SearchFunc("", customDN.server)
-	//s.LDAP.CloseFunc("", customDN.server)
+
 	for _, d := range s.DNs {
 		log.Debug().Msgf("Adding Fns for DN: %s", d.BaseDN)
 		s.LDAP.BindFunc(d.BaseDN, customDN.server)
@@ -63,7 +56,6 @@ func (s *server) startListeners() {
 	s.LDAP.EnforceLDAP = true
 
 	// Build a list of entries from DNs
-	//defaultDN.buildDatabase()
 	customDN.buildDatabase()
 
 	// Start LDAP
@@ -130,12 +122,14 @@ func (s *handler) buildDatabase() {
 	}
 }
 
+// Bind implements LDAP Bind from RFC4510. Currently, this only implements anonymous binds
 func (s *server) Bind(bindDN, bindPW string, conn net.Conn) (ldap.LDAPResultCode, error) {
 	log.Debug().Msgf("BindDN from BindFn: %s", bindDN)
 	// Allow anonymous binds
 	return ldap.LDAPResultSuccess, nil
 }
 
+// Search implements LDAP Search from RFC4510
 func (s *server) Search(boundDN string, searchReq ldap.SearchRequest, conn net.Conn) (ldap.ServerSearchResult, error) {
 	log.Debug().Msgf("caught search request: %s, %v", searchReq.BaseDN, searchReq)
 
@@ -156,6 +150,7 @@ func (s *server) Search(boundDN string, searchReq ldap.SearchRequest, conn net.C
 	return results, nil
 }
 
+// Close the network connection for the DN
 func (s *server) Close(boundDN string, conn net.Conn) error {
 	return conn.Close()
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -36,6 +37,8 @@ type Configuration struct {
 	MaxPollingEvents int               `json:"maxPollingEvents"`
 	HTTP             HTTPConfiguration `json:"http"`
 	DNS              DNSConfiguration  `json:"dns"`
+	PluginsDirectory string            `json:"pluginsDirectory"`
+	Plugin           Plugins           `json:"plugins"`
 }
 
 type DNSConfiguration struct {
@@ -56,13 +59,21 @@ type DNSTransportSecurity struct {
 }
 
 type HTTPConfiguration struct {
-	EnableV2     bool            `json:"enableV2"`
-	Username     string          `json:"username"`
-	Password     string          `json:"password"`
-	CsrfKey      string          `json:"csrfKey"`
-	SigningKey   string          `json:"signingKey"`
-	TemplatePath string          `json:"templatePath"`
-	Listeners    []HTTPListeners `json:"listeners"`
+	EnableV2     bool                     `json:"enableV2"`
+	Username     string                   `json:"username"`
+	Password     string                   `json:"password"`
+	CsrfKey      string                   `json:"csrfKey"`
+	SigningKey   string                   `json:"signingKey"`
+	TemplatePath string                   `json:"templatePath"`
+	Listeners    []HTTPListeners          `json:"listeners"`
+	Static       HTTPStaticConfigurration `json:"static"`
+}
+
+type HTTPStaticConfigurration struct {
+	Browsing bool   `json:"browsing"`
+	Enable   bool   `json:"enable"`
+	Path     string `json:"path"`
+	Prefix   string `json:"prefix"`
 }
 
 type HTTPListeners struct {
@@ -79,6 +90,8 @@ type HTTPTransportSecurity struct {
 	PrivateKey string `json:"privateKey"`
 }
 
+type Plugins struct{}
+
 func generateConfig() {
 	cfg, _ := json.MarshalIndent(Configuration{
 		Domain:           "example.test.domain",
@@ -93,6 +106,12 @@ func generateConfig() {
 			CsrfKey:      generateCredentials("csrfKey"),
 			SigningKey:   generateCredentials("signingKey"),
 			TemplatePath: "internal/pkg/http/template/",
+			Static: HTTPStaticConfigurration{
+				Browsing: true,
+				Enable:   false,
+				Path:     "static/",
+				Prefix:   "/assets",
+			},
 			Listeners: []HTTPListeners{
 				{
 					Address:          "",
@@ -131,6 +150,8 @@ func generateConfig() {
 				},
 			},
 		},
+		PluginsDirectory: "plugins/",
+		Plugin:           Plugins{},
 	}, "", "    ")
 
 	fmt.Println(string(cfg))
@@ -201,5 +222,14 @@ func generateCredentials(pwType string) string {
 }
 
 func initConfig() {
-	config.InitConfig(ProjectName, configureSuggestion)
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "config":
+			return
+		case "help":
+			return
+		default:
+			config.InitConfig(ProjectName, configureSuggestion)
+		}
+	}
 }

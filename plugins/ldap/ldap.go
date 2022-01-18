@@ -98,6 +98,8 @@ type TLSConfig struct {
 	KeyFile *string
 }
 
+// NewServer takes a wrapper config and returns an interface
+// that implements the Start and Stop methods
 func NewServer(cfg wrapper.Config) wrapper.Module {
 	ldapConfig := buildSpecFromConfig()
 
@@ -111,11 +113,13 @@ func NewServer(cfg wrapper.Config) wrapper.Module {
 	return ldapFacade
 }
 
+// Start method starts the LDAP server listeners
 func (s *Server) Start() {
 	log.Debug().Msg("Starting LDAP server")
 	s.listener.startListeners()
 }
 
+// Stop method stops the LDAP server listeners
 func (s *Server) Stop() {
 	log.Debug().Msg("Stopping LDAP server")
 	s.listener.stopListeners()

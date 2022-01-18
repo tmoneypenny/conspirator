@@ -20,6 +20,7 @@ func Uint32ToPtr(i uint32) *uint32 {
 	return &i
 }
 
+// FileReader takes a string filename and retuns a byte slice and error
 func FileReader(filename string) ([]byte, error) {
 	file, err := os.ReadFile(filename)
 	if err != nil {
