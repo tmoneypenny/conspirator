@@ -1,29 +1,57 @@
-<!DOCTYPE html>
+{{ template "header" }}
+{{ template "navigation" }}
 
-<html>
-<head>
-<link rel="icon" href="data:,">
-</head>
-<body>
-    <h2>Admin: Delete route</h2>
-        {{ .csrfField }}
-    <form id="formElem">
-        <label for="reqMethod">Method:</label><br>
-        <select id="select" multiple>
-            <option value="GET" selected>GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-            <option value="HEAD">HEAD</option>
-            <option value="DELETE">DELETE</option>
-            <option value="TRACE">TRACE</option>
-            <option value="OPTIONS">OPTIONS</option>
-        </select>
-        <p></p>
-        <label for="urlPath">URL:</label><br>
-        <input type="text" id="urlPath" name="urlPath" value=""><br>
-        <p></p>
-        <input type="submit" value="Submit">
-    </form>
+{{ template "body" }}
+                <div class="container bg-dark text-white sticky-top shadow offset-md-0 px-4 p-3">
+                    <div class="row justify-content-start">
+                        <h1 class="h2 fs-4">Delete route</h1>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column px-3 p-3">
+                    <div id="liveAlertPlaceholder"></div>
+                    {{ .csrfField }}
+                    <form class="needs-validation" id="formElem">
+                        <div class="row p-1">
+                            <label for="method" class="form-label fs-5">Methods</label>
+                            <div >
+                                <div class="row row-cols-8">
+                                    <div class="col mx-auto d-grid offset-md-0 p-1">
+                                        <div class="form-check form-check-inline">
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="GET" checked>GET</label></div>
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="POST">POST</label></div>
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="OPTION">OPTION</label></div>
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="TRACE">TRACE</label></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row row-cols-8">
+                                    <div class="col mx-auto d-grid offset-md-0 p-1">
+                                        <div class="form-check form-check-inline">
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="PUT">PUT</label></div>
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="HEAD">HEAD</label></div>
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="DELETE">DELETE</label></div>
+                                            <div class="form-check form-check-inline"><label class="checkbox-inline"><input type="checkbox" value="PATCH">PATCH</label></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row p-1">
+                            <div class="input-group mb-1">
+                                <span class="input-group-text sm-6 fs-6" id="inputGroup-sizing-lg">URL</span>
+                                <input type="text" id="urlPath" name="urlPath" value="" placeholder="/exploit" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <span class="p-2 px-4">
+                            <button type="submit" value="Submit" class="btn btn-danger">Delete Route</button>
+                            </span>
+                        </div>
+
     <script>
         const endpoint = '/api/v1/deleteRoute';
 
@@ -34,9 +62,10 @@
 
             let csrfToken = formData.get('gorilla.csrf.Token')
             let apiToken = formData.get('access-token')
-            let selected = Array.from(select.options)
-                .filter(option => option.selected)
-                .map(option => option.value);
+
+            let selected = Array.from(document.querySelectorAll('input[type="checkbox"]'))
+                .filter((checkbox) => checkbox.checked)
+                .map((checkbox) => checkbox.value);
 
             formData.set('methods', btoa(selected));
 
@@ -51,10 +80,13 @@
 
             let result = await response.json();
 
-            alert(result.status);
+            if (result.status == "OK") {
+                alertMessage("Route successfully added!", "success");
+            } else {
+                alertMessage("Failed to add route!", "danger");
+            }
+
         };
     </script>
 
-</body>
-
-</html>
+{{ template "footer" }}

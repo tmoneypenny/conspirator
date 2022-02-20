@@ -1,8 +1,13 @@
-<!DOCTYPE html>
+{{ template "header" }}
+{{ template "navigation" }}
 
-<html>
-<head>
-<link rel="icon" href="data:,">
+{{ template "body" }}  
+                <div class="container bg-dark text-white sticky-top shadow offset-md-0 px-4 p-3">
+                    <div class="row justify-content-start">
+                        <h1 class="h2 fs-4">Show routes</h1>
+                    </div>
+                </div>
+
     <script>
         (async () => {
             const endpoint = '/api/v1/showRoutes';
@@ -43,8 +48,6 @@
             console.log("Result over here %j", result);
         })()
     </script>
-</head>
-<body>
     <ul id="ul"></ul>
-</body>
-</html>
+
+{{ template "footer" }}

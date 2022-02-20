@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/csrf"
 	"github.com/labstack/echo/v4"
@@ -26,7 +27,7 @@ var (
 func adminLoginForm() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Header().Set("X-Csrf-Token", csrf.Token(c.Request()))
-		return c.Render(http.StatusOK, "login.tmpl", map[string]interface{}{
+		return c.Render(http.StatusOK, "signin.tmpl", map[string]interface{}{
 			csrf.TemplateTag: csrf.TemplateField(c.Request()),
 		})
 	}
@@ -63,14 +64,38 @@ func adminLogin() echo.HandlerFunc {
 	}
 }
 
+// adminLogout is a weak logout as the JWT will still be valid until it expires.
+// typically this is done by adding the token to a denyList until it can naturally expire,
+// but to save some dev cycles we chose do this :)
+func adminLogout() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.SetCookie(&http.Cookie{
+			Name:     auth.BearerTokenCookieName,
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+			Expires:  time.Now().Add(-7 * 24 * time.Hour),
+		})
+		return c.Redirect(http.StatusMovedPermanently, "/user/signin")
+	}
+}
+
+// adminSettings - /admin/settings
+func adminSettings(c echo.Context) error {
+	c.Response().Header().Set("X-Csrf-Token", csrf.Token(c.Request()))
+	accessCookie, _ := c.Cookie("access-token")
+	return c.Render(http.StatusOK, "settings.tmpl", map[string]interface{}{
+		csrf.TemplateTag: csrf.TemplateField(c.Request()),
+		"AccessToken":    accessCookie.Value,
+	})
+}
+
 // adminHome - /admin/home
 func adminHome(c echo.Context) error {
 	c.Response().Header().Set("X-Csrf-Token", csrf.Token(c.Request()))
-	userCookie, _ := c.Cookie("user")
 	accessCookie, _ := c.Cookie("access-token")
 	return c.Render(http.StatusOK, "adminHome.tmpl", map[string]interface{}{
 		csrf.TemplateTag: csrf.TemplateField(c.Request()),
-		"random":         userCookie.Value,
 		"AccessToken":    accessCookie.Value,
 	})
 }

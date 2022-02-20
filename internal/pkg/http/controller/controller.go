@@ -25,11 +25,15 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 // Router handles all built-in, non-API, routes
 func Router(s *echo.Echo) {
 	loginGroup := s.Group("/user")
+	loginGroup.Use(middleware.HTTPSRedirect())
 	loginGroup.Use(echo.WrapMiddleware(csrf.Protect(auth.CSRFKey)))
 	loginGroup.GET("/signin", adminLoginForm()).Name = "adminLoginForm"
 	loginGroup.POST("/signin", adminLogin())
 
+	loginGroup.GET("/signout", adminLogout())
+
 	adminGroup := s.Group("/admin")
+	adminGroup.Use(middleware.HTTPSRedirect())
 	adminGroup.Use(echo.WrapMiddleware(csrf.Protect(auth.CSRFKey)))
 
 	jwtConfig := middleware.JWTConfig{
@@ -45,6 +49,7 @@ func Router(s *echo.Echo) {
 	adminGroup.GET("/docs/*", echoSwagger.WrapHandler)
 
 	adminGroup.GET("/home", adminHome)
+	adminGroup.GET("/settings", adminSettings)
 	adminGroup.GET("/addRoute", addRoute)
 	adminGroup.GET("/deleteRoute", deleteRoute)
 	adminGroup.GET("/showRoutes", showRoutes)

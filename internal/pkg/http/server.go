@@ -43,6 +43,11 @@ var (
 		Name: "denied_ips_total",
 		Help: "Total denied IPs",
 	})
+
+	pollingInteractionEvents = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "polling_interaction_events_total",
+		Help: "Total Polling Interaction Events",
+	})
 )
 
 type server struct {
@@ -273,6 +278,7 @@ func (s *server) pollingResults() ([]byte, error) {
 		return s.Marshaller.EmptyResponse(), nil
 	}
 
+	pollingInteractionEvents.Inc()
 	// If any field in events, or event itself, is of type []byte,
 	// then the JSON marshaller will encode the response as a
 	// base64-encoded strings

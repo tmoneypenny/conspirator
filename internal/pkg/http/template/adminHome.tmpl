@@ -1,22 +1,191 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="icon" href="data:,">
-    <script>
-        function revealKey() {
-            document.getElementById("token").innerHTML = {{ index . "AccessToken" }};
-        }
-    </script>
-</head>
-<body>
-    {{ .csrfField }}
-    <h2>Welcome, {{ index . "random" }}!</h2>
-    <button onclick="revealKey()">Show Token</button>
-    <p><code id="token"></code></p>
-    <p><a href="/admin/addRoute">Add Route</a></p>
-    <p><a href="/admin/deleteRoute">Delete Route</a></p>
-    <p><a href="/admin/showRoutes">Show Routes</a></p>
-    <p><a href="/admin/poll">Polling Server</a></p>
-    <p><a href="/admin/docs/index.html">API Docs</a></p>
-</body>
-</html>
+{{ template "header" }}
+{{ template "navigation" }}
+{{ template "body" }}
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <div class="container bg-dark text-white sticky-top shadow offset-md-0 px-4 p-3">
+                    <div class="row justify-content-start">
+                        <h1 class="h2 fs-4">Dashboard</h1>
+                    </div>
+                </div>
+
+                <div class="container" >
+                  <div class="row p-2 border-bottom">
+                    <label for="method" class="form-label fs-5 border-bottom">Metrics</label>
+                    {{ .csrfField }}
+                    <div class="chartjs-size-monitor">
+                      <div class="chartjs-size-monitor-expand">
+                        <div class></div>
+                      </div>
+                      <div class="chartjs-size-monitor-shrink">
+                        <div class></div>
+                      </div>
+                    </div>
+                    <div class="col p-1">
+                        <canvas class="my-2 w-100 chartjs-render-monitor border" id="resource-chart" ></canvas>
+                        <canvas class="my-2 w-100 chartjs-render-monitor border" id="http-chart" ></canvas>
+                    </div>
+                    <div class="col p-1">
+                        <canvas class="my-2 w-100 chartjs-render-monitor" id="radar-chart" ></canvas>
+                    </div>
+                  </div>
+                </div>
+
+                <script>
+                async function getMetrics() {
+                  const endpoint  = '/api/v1/metrics';
+
+                  let res = fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': 'Bearer {{ index . "AccessToken" }}'
+                    }
+                  }).then(response => {
+                      if (response.status == 200) {
+                        return response.text();
+                      } else {
+                        return null;
+                      }
+                    }
+                  );
+
+                  let results = await res;
+                  return results;
+
+                };
+
+                function parseMetrics(text) {
+                  let parsed_text = text.split('\n')
+                  .map(keyVal => {
+                    return keyVal
+                      .split(' ')
+                      .map(_ => _.trim())
+                  }).
+                  reduce((acc, current) => {
+                    acc[current[0]] = current[1]
+                    return acc
+                  }, {});
+                  return parsed_text
+                }
+
+
+                let text = getMetrics().then(parseMetrics).then(function(response) { 
+                  console.log(response);
+                  let resource_data = {
+                    cpu_cores: response.go_system_total_cpus,
+                    memory_utilization: response.process_resident_memory_bytes,
+                    go_routines: response.go_goroutines
+                  }
+
+                  let interaction_data = {
+                    dns: response.dns_interaction_events_total,
+                    http: response.http_interaction_events_total,
+                    polling: response.polling_interaction_events_total,
+                    ldap: response.ldap_interaction_events_total,
+                    other: 0, // unused ATM
+                  }
+
+                  let http_data = {
+                    success: response['promhttp_metric_handler_requests_total{code="200"}'],
+                    server_block: response['promhttp_metric_handler_requests_total{code="503"}'],
+                    server_error: response['promhttp_metric_handler_requests_total{code="500"}'],
+                  }
+
+                  /* interaction chart */
+                  new Chart(document.getElementById("radar-chart"), {
+                  type: 'radar',
+                  data: {
+                    labels: ["DNS", "HTTP", "Polling", "LDAP", "Other"],
+                    datasets: [
+                      {
+                        label: "Interactions",
+                        fill: true,
+                        backgroundColor: "rgba(255,99,132,0.2)",
+                        borderColor: "rgba(255,99,132,1)",
+                        pointBorderColor: "#fff",
+                        pointBackgroundColor: "rgba(255,99,132,1)",
+                        pointBorderColor: "#fff",
+                        //data: [25.48,54.16,7.61,8.06,4.45]
+                        data: [interaction_data.dns,interaction_data.http,interaction_data.polling,interaction_data.ldap,interaction_data.other]
+                      }
+                    ]
+                  },
+                  options: {
+                    title: {
+                      display: true,
+                      text: 'Distribution in % of interactions'
+                    }
+                  }
+                });
+                /* end interaction chart */
+
+                /* resource chart */
+
+                new Chart(document.getElementById("resource-chart"), {
+                  type: 'bar',
+                  data: {
+                    labels: ["#CPU Cores", "Memory Used (Mb)", "Goroutines"],
+                    datasets: [{ 
+                        data: [resource_data.cpu_cores, resource_data.memory_utilization / 1000 / 1000, resource_data.go_routines],
+                        label: "Utilization",
+                        backgroundColor: [
+                          'rgba(255, 99, 132, 0.5)',
+                          'rgba(75, 192, 192, 0.5)',
+                          'rgba(54, 162, 235, 0.5)',
+                        ],
+                        borderColor: [
+                          'rgb(255, 99, 132)',
+                          'rgb(75, 192, 192)',
+                          'rgb(54, 162, 235)',
+                        ],
+                        borderWidth: 1
+                      }
+                    ]
+                  },
+                  options: {
+                    scales: {
+                      y: {
+                        beginAtZero: true
+                      }
+                    }
+                  },
+                });
+                /* end resource chart */
+
+                /* http chart */
+                new Chart(document.getElementById("http-chart"), {
+                  type: 'bar',
+                  data: {
+                    labels: ["200", "500", "503"],
+                    datasets: [{ 
+                        data: [http_data.success, http_data.server_error, http_data.server_block],
+                        label: "HTTP Status",
+                        backgroundColor: [
+                          'rgba(255, 99, 132, 0.5)',
+                          'rgba(75, 192, 192, 0.5)',
+                          'rgba(54, 162, 235, 0.5)',
+                        ],
+                        borderColor: [
+                          'rgb(255, 99, 132)',
+                          'rgb(75, 192, 192)',
+                          'rgb(54, 162, 235)',
+                        ],
+                        borderWidth: 1
+                      }
+                    ]
+                  },
+                  options: {
+                    indexAxis: 'y',
+                  },
+                });
+                /* end http chart */
+              })
+
+                
+
+
+
+
+              
+
+              </script>
+{{ template "footer" }}

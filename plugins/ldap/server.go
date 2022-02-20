@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/nmcclain/ldap"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog/log"
 	"github.com/tmoneypenny/conspirator/internal/pkg/encoding"
 	"github.com/tmoneypenny/conspirator/internal/pkg/polling"
@@ -14,6 +16,13 @@ import (
 
 const (
 	fileAttributePrefix = "file://"
+)
+
+var (
+	ldapInteractionEvents = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "ldap_interaction_events_total",
+		Help: "Total LDAP interactions",
+	})
 )
 
 type server struct {
@@ -45,7 +54,6 @@ func newServer(specs *LDAPConfig) *server {
 
 func (s *server) startListeners() {
 	customDN := handler{server: s}
-
 	for _, d := range s.DNs {
 		log.Debug().Msgf("Adding Fns for DN: %s", d.BaseDN)
 		s.LDAP.BindFunc(d.BaseDN, customDN.server)
@@ -86,6 +94,11 @@ func (s *server) stopListeners() {
 	s.LDAP.QuitChannel(s.LDAP.Quit)
 }
 
+/*
+For LDAPv3 scheme for Java objects in LDAP:
+https://docs.ldap.com/specs/rfc2713.txt
+*/
+
 func (s *handler) buildDatabase() {
 	for e := range s.server.DNs {
 		var ldapEntryAttributes []*ldap.EntryAttribute
@@ -95,7 +108,7 @@ func (s *handler) buildDatabase() {
 				if strings.HasPrefix(v, fileAttributePrefix) {
 					// FileReader will error if the file is not found
 					value, _ = util.FileReader(strings.TrimPrefix(v, fileAttributePrefix))
-					value = fmt.Sprintf("< %v", string(value.([]byte)))
+					value = fmt.Sprintf("%v", string(value.([]byte)))
 				}
 				ldapEntryAttributes = append(ldapEntryAttributes, &ldap.EntryAttribute{
 					Name:   attr,
@@ -143,7 +156,7 @@ func (s *server) Search(boundDN string, searchReq ldap.SearchRequest, conn net.C
 	go interactionHandler(
 		s, // server
 		searchReq.BaseDN+"/"+searchReq.Filter,
-		ldapResponsePrinter(results.Entries...), // why [0]?
+		ldapResponsePrinter(results.Entries...),
 		conn.RemoteAddr().String(),
 	)
 
@@ -182,5 +195,6 @@ func interactionHandler(s *server, request, response string, clientIP string) {
 		log.Error().Msg("error marshalling LDAP data")
 	}
 
+	ldapInteractionEvents.Inc()
 	s.PollingServer.Publish(jsonData)
 }
