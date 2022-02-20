@@ -1,65 +1,77 @@
-<!DOCTYPE html>
+{{ template "header" }}
+{{ template "navigation" }}
 
-<html>
-<head>
-<link rel="icon" href="data:,">
-<title>Polling</title>
-</head>
-<body>
-    <textarea cols=80 rows=30 id="message" style="overflow:auto;"></textarea>
-    <br>
-    <button id=startPoll>Start Poll</button>
-    <button id=stopPoll>Stop Poll</button>
-    <div id=output></div>
+{{ template "body" }}  
+                   <div class="container bg-dark text-white sticky-top shadow offset-md-0 px-4 p-3">
+                    <div class="row justify-content-start">
+                        <h1 class="h2 fs-4">Polling</h1>
+                    </div>
+                </div> 
 
-    <script>
-        let output = document.querySelector("#output"),
-            textarea = document.querySelector("textarea");
+                <div class="col-md-10 px-3 p-3">
 
-        let startButton = document.querySelector("#startPoll"),
-            stopButton = document.querySelector("#stopPoll");
+                    <textarea class="col-md-12" id="message" style="overflow:auto; height:800px"></textarea>
+                    <div id=output></div>
+                    <br>
+                    <div class="row">
+                        <div class="col-md-6 mx-auto d-grid ">
+                            <button id=startPoll type="button" class="btn btn-primary">Start Polling</button>
+                        </div>
+                        <div class="col-md-6 mx-auto d-grid">
+                            <button id=stopPoll type="button" class="btn btn-secondary">Stop Polling</button>
+                        </div>
+                    </div>
 
-        startButton.addEventListener("click", startPoll);
-        stopButton.addEventListener("click", stopPoll);
 
-        let pollingServer = "polling." + document.domain;
-        let socket = new WebSocket("wss://"+ pollingServer);
-        let pollingInterval;
+                    <script>
+                        let output = document.querySelector("#output"),
+                            textarea = document.querySelector("textarea");
 
-        function startPoll() {
-            console.log("starting polling");
-            socket.onopen = event => { 
-                console.log("Connection Established");
-                socket.send("biid?id="+1);
-            };
+                        let startButton = document.querySelector("#startPoll"),
+                            stopButton = document.querySelector("#stopPoll");
 
-            socket.onmessage = event => {
-                console.log(event);
-                textarea.value += event.data + "\n";
-            };
+                        startButton.addEventListener("click", startPoll);
+                        stopButton.addEventListener("click", stopPoll);
 
-            socket.onclose = event => {
-                if (event.wasClean) {
-                    console.log("Connection closed");
-                    clearInterval(pollingInterval);
-                } else {
-                    console.log("Connection not closed cleanly");
-                    clearInterval(pollingInterval);
-                }
-            };
+                        let pollingServer = "polling." + document.domain;
+                        let socket = new WebSocket("wss://"+ pollingServer);
+                        let pollingInterval;
 
-            pollingInterval = setInterval(() => {
-                socket.send('update');
-            }, 2000);
+                        function startPoll() {
+                            console.log("starting polling");
+                            socket.onopen = event => { 
+                                console.log("Connection Established");
+                                socket.send("biid?id="+1);
+                            };
 
-            socket.onerror = error => console.log(`error ${error.message}`);
-        };
+                            socket.onmessage = event => {
+                                console.log(event);
+                                textarea.value += event.data + "\n";
+                            };
 
-        function stopPoll() {
-            console.log("stopping polling");
-            clearInterval(pollingInterval);
-        };
+                            socket.onclose = event => {
+                                if (event.wasClean) {
+                                    console.log("Connection closed");
+                                    clearInterval(pollingInterval);
+                                } else {
+                                    console.log("Connection not closed cleanly");
+                                    clearInterval(pollingInterval);
+                                }
+                            };
 
-    </script>
-</body>
-</html>
+                            pollingInterval = setInterval(() => {
+                                socket.send('update');
+                            }, 2000);
+
+                            socket.onerror = error => console.log(`error ${error.message}`);
+                        };
+
+                        function stopPoll() {
+                            console.log("stopping polling");
+                            clearInterval(pollingInterval);
+                        };
+
+                    </script>
+                </div>
+
+{{ template "footer" }}

@@ -5,13 +5,23 @@ import (
 	"os"
 	"os/signal"
 	"plugin"
+	"runtime"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/tmoneypenny/conspirator/internal/pkg/bind"
 	"github.com/tmoneypenny/conspirator/internal/pkg/http"
 	"github.com/tmoneypenny/conspirator/internal/pkg/polling"
 	"github.com/tmoneypenny/conspirator/pkg/wrapper"
+)
+
+var (
+	numCpus = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "go_system_total_cpus",
+		Help: "Total CPUs",
+	})
 )
 
 // configureBind builds a BindConfig by parsing the config file
@@ -87,6 +97,9 @@ func configureHTTP() *http.HTTPServerConfig {
 
 // serverHandler is responsible for starting and stopping all extensions
 func serverHandler() {
+	// Register # CPUs
+	numCpus.Add(float64(runtime.NumCPU()))
+
 	// Start DNS
 	log.Debug().Msg("Starting Server Handler")
 	bindConfig := configureBind()

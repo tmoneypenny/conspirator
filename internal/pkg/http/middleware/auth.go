@@ -14,7 +14,7 @@ var (
 	CSRFKey               = []byte(viper.GetString("http.csrfKey"))    // 32-byte Key
 	JWTSigningKey         = []byte(viper.GetString("http.signingKey")) // 32-byte Key
 	BearerTokenCookieName = "access-token"
-	tokenTTL              = time.Hour * 72
+	tokenTTL              = time.Hour * 12
 )
 
 // JWTClaim is used to create a new JTW Claim
@@ -54,8 +54,6 @@ func GenerateToken(user *User, c echo.Context) error {
 
 	// set token cookie
 	user.setCookie(BearerTokenCookieName, token, expiration, c)
-	// set user cookie
-	user.setCookie("user", user.Username, expiration, c)
 
 	return nil
 }

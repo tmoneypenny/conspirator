@@ -1,0 +1,28 @@
+{{ template "header" }}
+{{ template "navigation" }}
+{{ template "body" }}
+                <div class="container bg-dark text-white sticky-top shadow offset-md-0 px-4 p-3">
+                    <div class="row justify-content-start">
+                        <h1 class="h2 fs-4">Settings</h1>
+                    </div>
+                </div>
+
+                {{ .csrfField }}
+                <div class="d-flex flex-column px-3 p-3">
+                  <div class="row mb-1 p-1">
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                      <div class="btn-group">
+                        <button onclick="revealKey()" type="button" class="btn btn-sm btn-outline-secondary">Show API Token</button>
+                      </div>
+                    </div>
+                    <p><code id="token"></code></p>
+                  </div>
+                </div>
+
+                <script>
+                    function revealKey() {
+                        document.getElementById("token").innerHTML = {{ index . "AccessToken" }};
+                    }
+                </script>
+
+{{ template "footer" }}
